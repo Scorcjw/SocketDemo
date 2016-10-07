@@ -1,0 +1,73 @@
+
+<body>
+    <div style="display: flex;flex-direction: column;justify-content: center;align-items:center;width: 100%;">
+        <p>Disgusting chat room!!</p>
+        <div id="chat-room" style="min-height: 200px;width:400px;border: 1px solid #ccc;">
+        </div>
+        <div id="coding">
+        </div>    
+        <div style="width:400px;display:flex;justify-content:space-between;">
+            <input id="message" style="width:70%;"/><button id="send_btn">Send Message</button>
+        </div>
+    </div>
+</body>
+<script src="./node_modules/socket.io/socket.io.js"></script>
+<script src="./node_modules/jquery/jquery.min.js"></script>
+<script>
+var socket = io.connect('http://192.168.1.96:8080');
+$('#message').on('focus',function(){
+    if($('#message').val()!=""){
+        socket.emit('coding',1);
+    }
+    return false;
+});
+$('#message').on('keyup',function(){
+    if($('#message').val()!=""){
+        socket.emit('coding',1);
+    }else{
+        socket.emit('coding',0);
+    }
+});
+$('#message').on('blur',function(){
+    socket.emit('coding',0);
+});
+$('#send_btn').on('click',function(){
+    if($('#message').val()==""){
+        return;
+    }
+    socket.emit('message', $('#message').val());
+    $('#message').val("")
+    return false;
+});
+<!--监听聊天内容-->
+socket.on('message', function(obj){
+    $("#chat-room").append("<p><span style='color:red'>"+obj.user+":</span>"+obj.data+"</p>");
+});
+//监听login事件
+socket.on('login', function(obj){
+    if(obj.self==true){
+        $("#chat-room").append("<p><span style='color:red'>Welcome!</span>"+obj.data+"</p>");
+    }
+    if(obj.self==false){
+        $("#chat-room").append("<p><span style='color:red'>"+obj.data+"</span> have joined room!</p>");
+    }
+});
+//监听status事件
+socket.on('coding', function(obj){
+    if(obj.status==1){
+        $("#coding").append("<p id='"+obj.user+"'><span style='color:red'>"+obj.user+"</span> is coding</p>");
+    }
+    if(obj.status==0){
+        $("#"+obj.user+"").remove();
+    }
+});
+var time=new Date()
+var name=prompt("Please enter your name!","test"+time.getHours()+time.getSeconds())
+if (name!=null && name!=""){
+    socket.emit('login',name);
+    // socket.broadcast.emit('');
+}
+</script>
+
+
+
